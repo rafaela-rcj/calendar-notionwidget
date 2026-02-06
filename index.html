@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calendário Widget</title>
+  <style>
+    :root{
+      --primary:#65090A;
+      --primary-2: rgba(101, 9, 10, 0.12);
+      --text:#2a2a2a;
+      --muted:#8a8a8a;
+      --bg:#ffffff;
+      --radius:14px;
+    }
+
+    body{
+      margin:0;
+      background:transparent;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .calendar{
+      width: 290px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 10px 28px rgba(0,0,0,.12);
+      border: 1px solid rgba(0,0,0,.06);
+    }
+
+    .header{
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 12px 10px;
+      position: relative;
+      text-align: center;
+    }
+
+    .month{
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 1.1;
+      text-transform: capitalize;
+      letter-spacing: .2px;
+    }
+
+    .year{
+      display:block;
+      margin-top: 2px;
+      font-size: 12px;
+      opacity: .85;
+      font-weight: 600;
+      letter-spacing: .6px;
+    }
+
+    .nav{
+      position:absolute;
+      top: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.10);
+      color:#fff;
+      cursor:pointer;
+      display:grid;
+      place-items:center;
+      user-select:none;
+      transition: transform .08s ease, background .15s ease;
+    }
+    .nav:hover{ background: rgba(255,255,255,.16); }
+    .nav:active{ transform: scale(.96); }
+    .prev{ left: 10px; }
+    .next{ right: 10px; }
+
+    .weekdays{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: rgba(101, 9, 10, 0.85);
+      color:#fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      padding: 7px 8px;
+      gap: 0;
+    }
+    .weekdays div{ opacity:.92; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 10px 10px 12px;
+      gap: 6px;
+    }
+
+    .cell{
+      height: 34px;
+      display:grid;
+      place-items:center;
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text);
+      background: transparent;
+    }
+
+    .pad{ visibility:hidden; }
+
+    .today{
+      background: var(--primary);
+      color:#fff;
+      font-weight: 800;
+      box-shadow: 0 8px 16px rgba(101,9,10,.25);
+    }
+
+    .muted{
+      color: var(--muted);
+      opacity: .75;
+    }
+
+    /* opcional: realce sutil ao passar o mouse (no Notion desktop fica bom) */
+    .cell:not(.pad):not(.today):hover{
+      background: var(--primary-2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="calendar" role="application" aria-label="Calendário">
+    <div class="header">
+      <button class="nav prev" aria-label="Mês anterior" title="Mês anterior" onclick="changeMonth(-1)">‹</button>
+
+      <div class="month" id="monthName">Mês</div>
+      <span class="year" id="yearNum">2026</span>
+
+      <button class="nav next" aria-label="Próximo mês" title="Próximo mês" onclick="changeMonth(1)">›</button>
+    </div>
+
+    <!-- Domingo primeiro -->
+    <div class="weekdays" aria-hidden="true">
+      <div>Do</div><div>Se</div><div>Te</div><div>Qa</div><div>Qi</div><div>Se</div><div>Sá</div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const monthNameEl = document.getElementById("monthName");
+    const yearNumEl = document.getElementById("yearNum");
+    const gridEl = document.getElementById("grid");
+
+    let viewDate = new Date();
+
+    function render(){
+      gridEl.innerHTML = "";
+
+      const y = viewDate.getFullYear();
+      const m = viewDate.getMonth();
+
+      // Primeiro dia do mês (0=Dom...6=Sáb)
+      const first = new Date(y, m, 1);
+      const startDay = first.getDay();
+
+      // Último dia do mês
+      const lastDate = new Date(y, m + 1, 0).getDate();
+
+      // Cabeçalho
+      const monthLabel = viewDate.toLocaleDateString("pt-BR", { month: "long" });
+      monthNameEl.textContent = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+      yearNumEl.textContent = y;
+
+      // Preencher espaços antes do dia 1 (domingo primeiro)
+      for(let i=0; i<startDay; i++){
+        const pad = document.createElement("div");
+        pad.className = "cell pad";
+        pad.textContent = ".";
+        gridEl.appendChild(pad);
+      }
+
+      // Dias
+      const now = new Date();
+      const isCurrentMonth = (y === now.getFullYear() && m === now.getMonth());
+
+      for(let d=1; d<=lastDate; d++){
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = d;
+
+        if(isCurrentMonth && d === now.getDate()){
+          cell.classList.add("today");
+        }
+
+        gridEl.appendChild(cell);
+      }
+    }
+
+    function changeMonth(step){
+      viewDate.setMonth(viewDate.getMonth() + step);
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
