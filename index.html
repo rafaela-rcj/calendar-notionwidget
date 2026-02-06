@@ -79,22 +79,22 @@
     .next{ right: 10px; }
 
     .weekdays{
-        display:grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 6px;                 /* ✅ mesmo gap do grid */
-        padding: 7px 10px;        /* ✅ mesma “margem” lateral do grid */
-        background: rgba(101, 9, 10, 0.88);
-        color:#fff;
-        font-size: 11px;
-        font-weight: 750;
-        letter-spacing: .6px;
-        text-transform: uppercase;
-      }
-      .weekdays div{
-        display:grid;
-        place-items:center;
-        opacity:.92;
-      }
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 7px 10px;
+      background: rgba(101, 9, 10, 0.88);
+      color:#fff;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+    }
+    .weekdays div{
+      display:grid;
+      place-items:center;
+      opacity:.92;
+    }
 
     .grid{
       display:grid;
