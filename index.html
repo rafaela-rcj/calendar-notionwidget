@@ -7,15 +7,17 @@
   <style>
     :root{
       --primary:#65090A;
-      --primary-2: rgba(101, 9, 10, 0.12);
+      --hover: rgba(101, 9, 10, 0.10);
+      --weekend: rgba(0,0,0,0.04);
       --text:#2a2a2a;
-      --muted:#8a8a8a;
+      --muted:#7f7f7f;
+      --muted2:#b1b1b1;
       --bg:#ffffff;
       --radius:14px;
     }
 
     body{
-      margin:0;
+      margin: 15px;
       background:transparent;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
       -webkit-font-smoothing: antialiased;
@@ -23,24 +25,24 @@
     }
 
     .calendar{
-      width: 290px;
+      width: 310px;
       background: var(--bg);
       border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 10px 28px rgba(0,0,0,.12);
       border: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 10px 28px rgba(0,0,0,.12);
     }
 
     .header{
       background: var(--primary);
       color: #fff;
-      padding: 12px 12px 10px;
+      padding: 14px 14px 12px;
       position: relative;
       text-align: center;
     }
 
     .month{
-      font-weight: 700;
+      font-weight: 750;
       font-size: 18px;
       line-height: 1.1;
       text-transform: capitalize;
@@ -49,10 +51,10 @@
 
     .year{
       display:block;
-      margin-top: 2px;
+      margin-top: 3px;
       font-size: 12px;
-      opacity: .85;
-      font-weight: 600;
+      opacity: .86;
+      font-weight: 650;
       letter-spacing: .6px;
     }
 
@@ -79,14 +81,13 @@
     .weekdays{
       display:grid;
       grid-template-columns: repeat(7, 1fr);
-      background: rgba(101, 9, 10, 0.85);
+      background: rgba(101, 9, 10, 0.88);
       color:#fff;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 750;
       letter-spacing: .6px;
       text-transform: uppercase;
-      padding: 7px 8px;
-      gap: 0;
+      padding: 7px 10px;
     }
     .weekdays div{ opacity:.92; }
 
@@ -98,17 +99,27 @@
     }
 
     .cell{
-      height: 34px;
+      height: 38px;
       display:grid;
       place-items:center;
       border-radius: 10px;
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text);
       background: transparent;
+      transition: background .12s ease, transform .08s ease;
     }
 
-    .pad{ visibility:hidden; }
+    /* dias que não são do mês atual */
+    .other-month{
+      color: var(--muted2);
+    }
 
+    /* fins de semana (sutil) */
+    .weekend{
+      background: var(--weekend);
+    }
+
+    /* hoje */
     .today{
       background: var(--primary);
       color:#fff;
@@ -116,14 +127,15 @@
       box-shadow: 0 8px 16px rgba(101,9,10,.25);
     }
 
-    .muted{
-      color: var(--muted);
-      opacity: .75;
+    /* hover bonito no desktop */
+    .cell:hover{
+      background: var(--hover);
     }
-
-    /* opcional: realce sutil ao passar o mouse (no Notion desktop fica bom) */
-    .cell:not(.pad):not(.today):hover{
-      background: var(--primary-2);
+    .cell.today:hover{
+      background: var(--primary);
+    }
+    .cell:active{
+      transform: scale(.98);
     }
   </style>
 </head>
@@ -160,37 +172,50 @@
       const y = viewDate.getFullYear();
       const m = viewDate.getMonth();
 
-      // Primeiro dia do mês (0=Dom...6=Sáb)
-      const first = new Date(y, m, 1);
-      const startDay = first.getDay();
-
-      // Último dia do mês
-      const lastDate = new Date(y, m + 1, 0).getDate();
+      const now = new Date();
+      const isCurrentMonth = (y === now.getFullYear() && m === now.getMonth());
 
       // Cabeçalho
       const monthLabel = viewDate.toLocaleDateString("pt-BR", { month: "long" });
       monthNameEl.textContent = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
       yearNumEl.textContent = y;
 
-      // Preencher espaços antes do dia 1 (domingo primeiro)
-      for(let i=0; i<startDay; i++){
-        const pad = document.createElement("div");
-        pad.className = "cell pad";
-        pad.textContent = ".";
-        gridEl.appendChild(pad);
-      }
+      // Índices e contagens
+      const firstDayIndex = new Date(y, m, 1).getDay();        // 0=Dom..6=Sáb
+      const daysInMonth = new Date(y, m + 1, 0).getDate();     // 28..31
 
-      // Dias
-      const now = new Date();
-      const isCurrentMonth = (y === now.getFullYear() && m === now.getMonth());
+      // Para mostrar dias do mês anterior
+      const prevMonthDays = new Date(y, m, 0).getDate();       // último dia do mês anterior
 
-      for(let d=1; d<=lastDate; d++){
+      // Grade fixa: 6 semanas x 7 dias = 42 células
+      const TOTAL = 42;
+
+      for (let i = 0; i < TOTAL; i++) {
         const cell = document.createElement("div");
         cell.className = "cell";
-        cell.textContent = d;
 
-        if(isCurrentMonth && d === now.getDate()){
-          cell.classList.add("today");
+        const dayNumber = i - firstDayIndex + 1;
+
+        // Fim de semana? (colunas 0=Dom e 6=Sáb)
+        const col = i % 7;
+        const isWeekend = (col === 0 || col === 6);
+        if (isWeekend) cell.classList.add("weekend");
+
+        if (dayNumber < 1) {
+          // dias do mês anterior
+          cell.textContent = prevMonthDays - (firstDayIndex - 1 - i);
+          cell.classList.add("other-month");
+        } else if (dayNumber > daysInMonth) {
+          // dias do próximo mês
+          cell.textContent = dayNumber - daysInMonth;
+          cell.classList.add("other-month");
+        } else {
+          // dias do mês atual
+          cell.textContent = dayNumber;
+
+          if (isCurrentMonth && dayNumber === now.getDate()) {
+            cell.classList.add("today");
+          }
         }
 
         gridEl.appendChild(cell);
